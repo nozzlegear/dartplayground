@@ -30,7 +30,7 @@ String envVarDefault(String key, String defaultValue) {
 
 bool envIsLive() {
   String env = envVarDefault("SCI_TALLY_ENV", "development");
-  String qs = envVarDefault("HTTP_QUERY", "");
+  String qs = envVarDefault("Http_Query", "");
 
   return env == "production" || qs.contains("env=production");
 }
@@ -104,7 +104,7 @@ SwuMessage buildEmailData(DateTime startDate, DateTime endDate, List<TallyTempla
   final formatEmail = (String name) => "$name@$emailDomain";
   final SwuRecipient emailRecipient =
       isLive ? new SwuRecipient("Mike", formatEmail("mikef")) : new SwuRecipient("Joshua Harms", formatEmail("josh"));
-  final List<SwuRecipient> ccs = isLive ? JSON.decode(envVarRequired("SCI_TALLY_CC_LIST")) : [];
+  final List<SwuRecipient> ccs = isLive ? fromJson(envVarRequired("SCI_TALLY_CC_LIST"), [List, SwuRecipient]) : [];
   final sender =
       new SwuSender("KMSignalR Superintendent", formatEmail("superintendent"), formatEmail("superintendent"));
 
@@ -159,16 +159,16 @@ Future main(List<String> args) async {
     "Authorization": "Basic ${BASE64.encode(UTF8.encode("$swuKey:"))}",
   };
 
-  print("Sending to: ${emailMessage.recipient.address}");
+  log.info("Sending to: ${emailMessage.recipient.address}");
 
   for (var cc in emailMessage.cc) {
-    print("CCed to: ${cc.address}");
+    log.info("CCed to: ${cc.address}");
   }
 
   Map<String, Object> emailResult =
       await makePostRequest("https://api.sendwithus.com/api/v1/send", encode(emailMessage), headers);
 
-  print("Send result: $emailResult");
+  log.info("Send result: $emailResult");
 }
 
 @serializable

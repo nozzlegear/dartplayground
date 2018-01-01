@@ -6,6 +6,9 @@ import "dart:convert" show UTF8, BASE64, Encoding, JSON;
 import "package:logging/logging.dart";
 import "package:intl/intl.dart" show DateFormat;
 import 'package:http/http.dart' as http;
+import "package:dson/dson.dart";
+
+part "main.g.dart";
 
 final Logger log = new Logger("main");
 
@@ -127,6 +130,7 @@ String encode(Object data) {
 }
 
 Future main(List<String> args) async {
+  _initMirrors();
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((LogRecord rec) {
     print('[${rec.level.name}] ${rec.time}: ${rec.message}');
@@ -154,53 +158,42 @@ Future main(List<String> args) async {
   log.info("Email send result: $emailResult");
 }
 
-class TallyTemplate {
+@serializable
+class TallyTemplate extends _$TallyTemplateSerializable {
   String source;
   int count;
 
   TallyTemplate(this.source, this.count);
-
-  Map toJson() {
-    return {"source": source, "count": count};
-  }
 }
 
-class SwuRecipient {
+@serializable
+class SwuRecipient extends _$SwuRecipientSerializable {
   String name;
   String address;
 
   SwuRecipient(this.name, this.address);
-
-  Map toJson() {
-    return {"name": name, "address": address};
-  }
 }
 
-class SwuSender extends SwuRecipient {
+@serializable
+class SwuSender extends _$SwuSenderSerializable {
+  String name;
+  String address;
   String replyTo;
 
-  SwuSender(String name, String address, this.replyTo) : super(name, address);
-
-  Map toJson() {
-    return super.toJson()..["replyTo"] = replyTo;
-  }
+  SwuSender(this.name, this.address, this.replyTo);
 }
 
-class SwuTallyTemplateData {
+@serializable
+class SwuTallyTemplateData extends _$SwuTallyTemplateDataSerializable {
   String startDate;
   String endDate;
   List<TallyTemplate> tally;
 
   SwuTallyTemplateData();
-
-  Map toJson() {
-    tally ??= [];
-
-    return {"startDate": startDate, "endDate": endDate, "tally": tally};
-  }
 }
 
-class SwuMessage {
+@serializable
+class SwuMessage extends _$SwuMessageSerializable {
   String template;
   SwuRecipient recipient;
   List<SwuRecipient> cc;
@@ -208,16 +201,4 @@ class SwuMessage {
   SwuTallyTemplateData template_data;
 
   SwuMessage();
-
-  Map toJson() {
-    cc ??= [];
-
-    return {
-      "template": template,
-      "recipient": recipient,
-      "cc": cc.map((r) => r.toJson()),
-      "sender": sender,
-      "template_data": template_data
-    };
-  }
 }

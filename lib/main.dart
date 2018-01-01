@@ -28,6 +28,13 @@ String envVarDefault(String key, String defaultValue) {
   return defaultValue;
 }
 
+bool envIsLive() {
+  String env = envVarDefault("SCI_TALLY_ENV", "development");
+  String qs = envVarDefault("HTTP_QUERY", "");
+
+  return env == "production" || qs.contains("env=production");
+}
+
 DateTime getMidnight() {
   DateTime now = new DateTime.now();
 
@@ -35,7 +42,7 @@ DateTime getMidnight() {
 }
 
 String buildApiUrl(DateTime startDate, DateTime endDate) {
-  String apiDomain = envVarDefault("SCI_TALLY_API_DOMAIN", "localhost:3000");
+  String apiDomain = envVarRequired("SCI_TALLY_API_DOMAIN");
   String protocol = apiDomain.contains("localhost") ? "http" : "https";
 
   return "$protocol://$apiDomain/api/v1/orders/tally/sources?since=${startDate.millisecondsSinceEpoch}&until=${endDate.millisecondsSinceEpoch}";
@@ -91,8 +98,8 @@ Future<T> makePostRequest<T>(String url, String body, [Map<String, String> heade
 }
 
 SwuMessage buildEmailData(DateTime startDate, DateTime endDate, List<TallyTemplate> tally) {
+  final isLive = envIsLive();
   final emailDomain = envVarRequired("SCI_TALLY_EMAIL_DOMAIN");
-  final bool isLive = envVarDefault("SCI_TALLY_ENV", "development") == "production";
   final swuTemplateId = envVarRequired("SCI_TALLY_SWU_TEMPLATE_ID");
   final formatEmail = (String name) => "$name@$emailDomain";
   final SwuRecipient emailRecipient =
@@ -152,10 +159,16 @@ Future main(List<String> args) async {
     "Authorization": "Basic ${BASE64.encode(UTF8.encode("$swuKey:"))}",
   };
 
+  print("Sending to: ${emailMessage.recipient.address}");
+
+  for (var cc in emailMessage.cc) {
+    print("CCed to: ${cc.address}");
+  }
+
   Map<String, Object> emailResult =
       await makePostRequest("https://api.sendwithus.com/api/v1/send", encode(emailMessage), headers);
 
-  log.info("Email send result: $emailResult");
+  print("Send result: $emailResult");
 }
 
 @serializable
@@ -168,9 +181,10 @@ class TallyTemplate extends _$TallyTemplateSerializable {
 
 @serializable
 class SwuRecipient extends _$SwuRecipientSerializable {
-  String name;
-  String address;
+  final String name;
+  final String address;
 
+  // SwuRecipient();
   SwuRecipient(this.name, this.address);
 }
 

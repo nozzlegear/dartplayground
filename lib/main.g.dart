@@ -41,8 +41,6 @@ abstract class _$TallyTemplateSerializable extends SerializableMap {
 abstract class _$SwuRecipientSerializable extends SerializableMap {
   String get name;
   String get address;
-  void set name(String v);
-  void set address(String v);
 
   operator [](Object __key) {
     switch (__key) {
@@ -56,12 +54,6 @@ abstract class _$SwuRecipientSerializable extends SerializableMap {
 
   operator []=(Object __key, __value) {
     switch (__key) {
-      case 'name':
-        name = __value;
-        return;
-      case 'address':
-        address = __value;
-        return;
     }
     throwFieldNotFoundException(__key, 'SwuRecipient');
   }
@@ -232,9 +224,9 @@ _SwuRecipient__Constructor([positionalParams, namedParams]) =>
     new SwuRecipient(positionalParams[0], positionalParams[1]);
 
 const $$SwuRecipient_fields_name =
-    const DeclarationMirror(name: 'name', type: String);
+    const DeclarationMirror(name: 'name', type: String, isFinal: true);
 const $$SwuRecipient_fields_address =
-    const DeclarationMirror(name: 'address', type: String);
+    const DeclarationMirror(name: 'address', type: String, isFinal: true);
 
 const SwuRecipientClassMirror =
     const ClassMirror(name: 'SwuRecipient', constructors: const {
@@ -249,9 +241,6 @@ const SwuRecipientClassMirror =
   'name': $$SwuRecipient_fields_name,
   'address': $$SwuRecipient_fields_address
 }, getters: const [
-  'name',
-  'address'
-], setters: const [
   'name',
   'address'
 ]);

@@ -8,6 +8,7 @@ RUN pub get
 # copy everything else and build
 COPY . ./
 RUN pub get --offline
+RUN dart tool/build.dart
 RUN /app/analyze.sh
 
 # Add openfaas watchdog
@@ -17,7 +18,7 @@ RUN chmod +x /usr/bin/fwatchdog
 RUN /usr/bin/dart --version
 
 # Define your UNIX binary here
-ENV fprocess="/usr/bin/dart /app/main.dart"
+ENV fprocess="/usr/bin/dart /app/lib/main.dart"
 ENV read_timeout=60
 ENV write_timeout=60
 # ENV content_type=application/json

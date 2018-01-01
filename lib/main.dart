@@ -87,7 +87,7 @@ Future<T> makePostRequest<T>(String url, String body, [Map<String, String> heade
   return JSON.decode(resp.body);
 }
 
-SwuMessage buildEmailData(DateTime startDate, List<TallyTemplate> tally) {
+SwuMessage buildEmailData(DateTime startDate, DateTime endDate, List<TallyTemplate> tally) {
   final emailDomain = envVarRequired("SCI_TALLY_EMAIL_DOMAIN");
   final bool isLive = envVarDefault("SCI_TALLY_ENV", "development") == "production";
   final swuTemplateId = envVarRequired("SCI_TALLY_SWU_TEMPLATE_ID");
@@ -104,8 +104,26 @@ SwuMessage buildEmailData(DateTime startDate, List<TallyTemplate> tally) {
     ..cc = ccs
     ..sender = sender
     ..template_data = (new SwuTallyTemplateData()
-      ..date = new DateFormat("MMM dd, yyyy").format(startDate)
+      ..startDate = new DateFormat("MMM dd, yyyy").format(startDate)
+      ..endDate = new DateFormat("MMM dd, yyyy").format(endDate)
       ..tally = tally);
+}
+
+String encode(Object data) {
+  dynamic toEncodable(arg) {
+    if (arg is Iterable) {
+      // JSON codec doesn't know how to encode iterable, but it does know how to encode List.
+      // Still doesn't answer the question of why a List<Map> registers as Iterable rather than
+      // a List in the first place.
+      return arg.toList();
+    }
+
+    // This will throw an exception if the object doesn't implement toJson. An exception will be thrown
+    // anyway as the codec won't know how to encode it.
+    return arg.toJson();
+  }
+
+  return JSON.encode(data, toEncodable: toEncodable);
 }
 
 Future main(List<String> args) async {
@@ -124,16 +142,14 @@ Future main(List<String> args) async {
 
   Iterable<TallyTemplate> tally = await makeGetRequest<Map<String, int>>(url)
       .then((map) => map.keys.map((key) => new TallyTemplate(key, map[key])));
-  SwuMessage emailMessage = buildEmailData(startDate, tally);
+  SwuMessage emailMessage = buildEmailData(startDate, endDate, tally);
   final swuKey = envVarRequired("SCI_TALLY_SWU_KEY");
   final headers = {
     "Authorization": "Basic ${BASE64.encode(UTF8.encode("$swuKey:"))}",
   };
 
-  print(JSON.encode(emailMessage));
-
   Map<String, Object> emailResult =
-      await makePostRequest("https://api.sendwithus.com/api/v1/send", JSON.encode(emailMessage), headers);
+      await makePostRequest("https://api.sendwithus.com/api/v1/send", encode(emailMessage), headers);
 
   log.info("Email send result: $emailResult");
 }
@@ -171,14 +187,16 @@ class SwuSender extends SwuRecipient {
 }
 
 class SwuTallyTemplateData {
-  String date;
+  String startDate;
+  String endDate;
   List<TallyTemplate> tally;
 
   SwuTallyTemplateData();
 
   Map toJson() {
     tally ??= [];
-    return {"date": date, "tally": tally.map((t) => t.toJson())};
+
+    return {"startDate": startDate, "endDate": endDate, "tally": tally.map((t) => t.toJson())};
   }
 }
 
@@ -197,7 +215,7 @@ class SwuMessage {
     return {
       "template": template,
       "recipient": recipient?.toJson() ?? {},
-      "cc": cc.map((r) => r.toJson()) ?? {},
+      "cc": cc.map((r) => r.toJson()) ?? [],
       "sender": sender?.toJson() ?? {},
       "template_data": template_data?.toJson() ?? {}
     };

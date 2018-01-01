@@ -196,7 +196,7 @@ class SwuTallyTemplateData {
   Map toJson() {
     tally ??= [];
 
-    return {"startDate": startDate, "endDate": endDate, "tally": tally.map((t) => t.toJson())};
+    return {"startDate": startDate, "endDate": endDate, "tally": tally};
   }
 }
 
@@ -214,10 +214,10 @@ class SwuMessage {
 
     return {
       "template": template,
-      "recipient": recipient?.toJson() ?? {},
-      "cc": cc.map((r) => r.toJson()) ?? [],
-      "sender": sender?.toJson() ?? {},
-      "template_data": template_data?.toJson() ?? {}
+      "recipient": recipient,
+      "cc": cc.map((r) => r.toJson()),
+      "sender": sender,
+      "template_data": template_data
     };
   }
 }

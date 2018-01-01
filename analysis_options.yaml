@@ -1,7 +1,13 @@
 analyzer:
   strong: true
+  exclude:
+    - '*.g.dart'
+    - '**/*.g.dart'
   errors:
     undefined_identifier: error
+    undefined_class: error
+    undefined_method: error
+    undefined_function: error
     missing_return: error
     return_of_invalid_type: error
     not_enough_required_arguments: error

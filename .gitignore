@@ -1,3 +1,4 @@
 env.yml
 .pub
 .packages
+.dart_tool
